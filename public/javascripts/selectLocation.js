@@ -1,11 +1,22 @@
 mapboxgl.accessToken = mapToken;
-
-var map = new mapboxgl.Map({
+let locationInput = document.getElementById('location');
+let marker = null;
+let map = new mapboxgl.Map({
     container: 'map',
-    style: 'mapbox://styles/mapbox/streets-v11',
-    center: [121.5654, 25.0330],
-    zoom: 12
+    style: 'mapbox://styles/mapbox/outdoors-v12',
+    center: [120.9738819, 23.97565],
+    zoom: 6
 });
+
+// 检查 campground 是否存在
+if (typeof campground !== 'undefined' && campground) {
+    map.setCenter(campground.geometry.coordinates);
+}
+console.dir(map);
+marker = new mapboxgl.Marker()
+    .setLngLat(map.getCenter())
+    .addTo(map);
+
 // 建立一個 geocoder 物件
 var geocoder = new MapboxGeocoder({
     accessToken: mapboxgl.accessToken, // 使用 access token
@@ -18,34 +29,31 @@ var geocoder = new MapboxGeocoder({
 
 // 將 geocoder 物件添加到地點輸入欄
 document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
-
-// 當選擇一個選項時，觸發事件
+// 当选择一个选项时，触发事件
 geocoder.on('result', function (e) {
-    // 取得選擇的地點資訊
+    // 获取选择的地点信息
     var place = e.result;
-    // 在控制台顯示地點資訊
+    // 在控制台显示地点信息
     console.log(place);
-    // 在地圖上顯示一個彈出視窗，顯示地點的名稱和座標
+    // 在地图上显示一个弹出视窗，显示地点的名称和坐标
     new mapboxgl.Popup()
         .setLngLat(place.center)
         .setHTML(`<h3>${place.place_name}</h3><p>${place.center}</p>`)
         .addTo(map);
 });
-let locationInput = document.getElementById('location');
-let marker = null;
 
 map.on('click', function (e) {
-    // 獲取點擊的座標
+    // 获取点击的坐标
     var lngLat = e.lngLat;
-    // 將座標轉換成字串，並保留兩位小數
+    // 将坐标转换成字符串，并保留两位小数
     var lngLatString = lngLat.lng.toFixed(6) + ', ' + lngLat.lat.toFixed(6);
-    // 將座標字串賦值給地點輸入框
+    // 将坐标字符串赋值给地点输入框
     locationInput.value = lngLatString;
-    // 如果已經有 marker，則先移除它
+    // 如果已经有 marker，则先移除它
     if (marker) {
         marker.remove();
     }
-    // 在點擊的位置新增一個 marker
+    // 在点击的位置新增一个 marker
     marker = new mapboxgl.Marker()
         .setLngLat(lngLat)
         .addTo(map);

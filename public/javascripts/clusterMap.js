@@ -2,9 +2,9 @@ mapboxgl.accessToken = mapToken;
 const map = new mapboxgl.Map({
     container: 'cluster-map',
     // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
-    style: 'mapbox://styles/mapbox/dark-v11',
-    center: [-103.5917, 40.6699],
-    zoom: 3
+    style: 'mapbox://styles/mapbox/outdoors-v12',
+    center: [120.9738819, 23.97565],
+    zoom: 6
 });
 
 map.addControl(new mapboxgl.NavigationControl());
@@ -74,7 +74,7 @@ map.on('load', () => {
         filter: ['!', ['has', 'point_count']],
         paint: {
             'circle-color': '#11b4da',
-            'circle-radius': 4,
+            'circle-radius': 8,
             'circle-stroke-width': 1,
             'circle-stroke-color': '#fff'
         }

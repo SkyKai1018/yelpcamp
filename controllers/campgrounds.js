@@ -12,13 +12,32 @@ module.exports.index = async (req, res) => {
 module.exports.renderNewForm = (req, res) => {
     res.render('campgrounds/new');
 }
-
+const getGeoData = async (location) => {
+    if (isLatLng(location)) {
+        // 如果是经纬度，直接使用输入的坐标
+        const [lng, lat] = location.split(',');
+        return {
+            body: {
+                features: [
+                    {
+                        geometry: {
+                            type: 'Point',
+                            coordinates: [parseFloat(lng), parseFloat(lat)]
+                        }
+                    }
+                ]
+            }
+        };
+    } else {
+        // 否则进行地理编码查询
+        return await geocoder.forwardGeocode({
+            query: location,
+            limit: 1
+        }).send();
+    }
+};
 module.exports.createCampground = async (req, res, next) => {
-    const geoData = await geocoder.forwardGeocode({
-        query: req.body.campground.location,
-        limit: 1
-    }).send()
-
+    const geoData = await getGeoData(req.body.campground.location);
     const campground = new Campground(req.body.campground);
     campground.geometry = geoData.body.features[0].geometry;
     campground.images = req.files.map(f => ({ url: f.path, filename: f.filename }))
@@ -56,6 +75,8 @@ module.exports.renderEditForm = async (req, res) => {
 module.exports.updateCampground = async (req, res) => {
     const { id } = req.params;
     console.log(req.body);
+    const geoData = await getGeoData(req.body.campground.location);
+    req.body.campground.geometry = geoData.body.features[0].geometry;
     const campground = await Campground.findByIdAndUpdate(id, { ...req.body.campground });
     const imgs = req.files.map(f => ({ url: f.path, filename: f.filename }));
     campground.images.push(...imgs);
@@ -65,7 +86,6 @@ module.exports.updateCampground = async (req, res) => {
             await cloudinary.uploader.destroy(filename);
         }
         await campground.updateOne({ $pull: { images: { filename: { $in: req.body.deleteImages } } } });
-
     }
 
     req.flash('success', 'Successfully updated campground!');
@@ -76,4 +96,10 @@ module.exports.deleteCampground = async (req, res) => {
     const campground = await Campground.findByIdAndDelete(req.params.id);
     req.flash('success', 'Successfully deleted campground!');
     res.redirect('/campgrounds');
+}
+
+function isLatLng(input) {
+    // 简单的判断逻辑，根据实际情况调整
+    const [lng, lat] = input.split(',');
+    return !isNaN(parseFloat(lng)) && !isNaN(parseFloat(lat));
 }
